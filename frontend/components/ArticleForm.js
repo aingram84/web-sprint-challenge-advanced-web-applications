@@ -6,13 +6,29 @@ const initialFormValues = { title: '', text: '', topic: '' }
 export default function ArticleForm(props) {
   const [values, setValues] = useState(initialFormValues)
   // ✨ where are my props? Destructure them here
+  const { currentArticleId,
+      articles,
+      setCurrentArticleId,
+      updateArticle,
+      postArticle 
+    } = props
+
+    useEffect(() => {
+      setValues(initialFormValues)
+    }, [])
 
   useEffect(() => {
     // ✨ implement
     // Every time the `currentArticle` prop changes, we should check it for truthiness:
     // if it's truthy, we should set its title, text and topic into the corresponding
     // values of the form. If it's not, we should reset the form back to initial values.
-  })
+    if(currentArticleId){
+      const currentArticle = articles.filter(art => art.article_id === currentArticleId)
+      setValues(currentArticle[0])
+    }else{
+      setValues(initialFormValues)
+    }
+  }, [currentArticleId])
 
   const onChange = evt => {
     const { id, value } = evt.target
@@ -21,14 +37,37 @@ export default function ArticleForm(props) {
 
   const onSubmit = evt => {
     evt.preventDefault()
+    console.log(evt)
+    if(currentArticleId){
+      let data = {
+        article_id: currentArticleId,
+        article: values
+      }
+      setValues(initialFormValues)
+      return updateArticle(data)
+    }else{
+      postArticle(values)
+      setValues(initialFormValues)
+    }
     // ✨ implement
     // We must submit a new post or update an existing one,
     // depending on the truthyness of the `currentArticle` prop.
   }
 
   const isDisabled = () => {
+    if(values.text && values.topic && values.title){
+      return false
+    }else{
+      return true
+    }
     // ✨ implement
     // Make sure the inputs have some values
+  }
+
+  const cancel = (e) => {
+    e.preventDefault();
+    setCurrentArticleId();
+    setValues(initialFormValues)
   }
 
   return (
@@ -58,18 +97,17 @@ export default function ArticleForm(props) {
       </select>
       <div className="button-group">
         <button disabled={isDisabled()} id="submitArticle">Submit</button>
-        <button onClick={Function.prototype}>Cancel edit</button>
+        <button onClick={(e) => cancel(e)}>Cancel edit</button>
       </div>
     </form>
   )
 }
 
-// 🔥 No touchy: LoginForm expects the following props exactly:
 ArticleForm.propTypes = {
   postArticle: PT.func.isRequired,
   updateArticle: PT.func.isRequired,
   setCurrentArticleId: PT.func.isRequired,
-  currentArticle: PT.shape({ // can be null or undefined, meaning "create" mode (as opposed to "update")
+  currentArticle: PT.shape({ 
     article_id: PT.number.isRequired,
     title: PT.string.isRequired,
     text: PT.string.isRequired,
